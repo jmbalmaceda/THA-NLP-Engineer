@@ -1,0 +1,22 @@
+# Environment
+.env
+
+# Virtual environment
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Tests
+.pytest_cache/
+
+# Logs
+conversation.log
+
+# Claude Code
+.claude/
+
+# macOS
+.DS_Store
