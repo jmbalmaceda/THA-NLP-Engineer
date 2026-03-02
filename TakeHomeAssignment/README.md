@@ -10,6 +10,7 @@ An agentic, multi-turn conversational food ordering assistant built with Python,
 - Order submission via MCP Streamable HTTP (`submit_order` tool)
 - Pluggable menu source — hardcoded (default) or MongoDB
 - Structured JSON conversation logging to `conversation.log`
+- **Voice mode** — speak your order and hear responses (optional, `--voice` flag)
 
 ## Setup
 
@@ -22,6 +23,9 @@ cd TakeHomeAssignment
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+
+# Optional: install voice mode dependencies (--voice flag)
+pip install -r requirements-voice.txt
 ```
 
 ### 2. Configure environment variables
@@ -54,8 +58,13 @@ MONGODB_COLLECTION=menu
 ### 3. Run
 
 ```bash
-# Interactive CLI
+# Text mode (default)
 python main.py
+
+# Voice mode — speak your order, hear responses
+python main.py --voice                        # default providers: whisper STT + macOS say TTS
+python main.py --voice --stt google           # Google STT (cloud, no key needed)
+python main.py --voice --stt google --tts edge  # Google STT + Microsoft Edge TTS
 
 # Run tests
 python -m pytest tests/ -v
@@ -63,11 +72,11 @@ python -m pytest tests/ -v
 
 ## Usage
 
-### Interactive mode
+### Text mode
 
 ```
 $ python main.py
-Food ordering agent ready. Type 'quit' or 'exit' to leave.
+Food ordering agent ready [text mode]. Type 'quit' or 'exit' to leave.
 
 You: I'd like a large classic burger with cheese and bacon
 Agent: Large Classic Burger with cheese and bacon — $12.00. Anything else?
@@ -128,8 +137,10 @@ print(response["tool_calls"])  # present only when submit_order was called
 ├── menu_mongodb.py       # MongoDB-backed menu provider
 ├── mcp_client.py         # Sync MCP client wrapper (submit_order + tool schema)
 ├── logger.py             # Structured JSON conversation logger
-├── main.py               # Interactive CLI entry point
+├── voice.py              # Voice I/O — STT and TTS providers (whisper, google, say, edge…)
+├── main.py               # CLI entry point (text + voice modes)
 ├── requirements.txt
+├── requirements-voice.txt  # Optional voice mode dependencies
 ├── .env.example
 ├── scripts/
 │   └── seed_mongodb.py   # Seed the MongoDB menu collection
@@ -172,6 +183,39 @@ python scripts/seed_mongodb.py
 The seed script reads `MENU` directly from `menu.py` and inserts one document per item, so it stays in sync with the static definition automatically.
 
 To add a new menu source, implement a class with a `load() -> dict[str, MenuItem]` method and register it in `get_menu_provider()` in `menu.py`.
+
+## Voice Mode
+
+Run with `--voice` to interact through microphone and speakers instead of keyboard.
+
+```
+$ python main.py --voice --stt google
+Food ordering agent ready [voice mode]. Type 'quit' or 'exit' to leave.
+
+Press Enter to record (or type 'quit'):    ← press Enter to start
+Recording… press Enter to stop.           ← speak your order
+                                           ← press Enter to stop
+Transcribing…
+You said: I'd like a large classic burger with cheese
+Agent: Large Classic Burger with cheese — $10.50. Anything else?  ← spoken aloud
+```
+
+### STT providers
+
+| Name | `--stt` value | How it works | Deps |
+|---|---|---|---|
+| faster-whisper | `whisper` (default) | Local inference, no internet needed | `faster-whisper sounddevice soundfile` |
+| Google Web Speech | `google` | Cloud API, no key required | `SpeechRecognition sounddevice soundfile` |
+
+### TTS providers
+
+| Name | `--tts` value | How it works | Deps |
+|---|---|---|---|
+| macOS say | `say` (default) | Built-in macOS `say` command | none |
+| pyttsx3 | `pyttsx3` | Offline, cross-platform | `pyttsx3` |
+| Microsoft Edge | `edge` | Cloud neural voices, high quality | `edge-tts` |
+
+Providers can also be set via environment variables (`STT_PROVIDER`, `TTS_PROVIDER`) so no CLI flag is needed. See `.env.example` for all voice-related variables.
 
 ## Design Decisions
 

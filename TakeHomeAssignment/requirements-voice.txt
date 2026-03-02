@@ -1,0 +1,18 @@
+# Voice mode dependencies — install only if using --voice
+# pip install -r requirements-voice.txt
+
+# Audio capture (required for both STT providers)
+sounddevice>=0.4.6
+soundfile>=0.12.1
+
+# STT: whisper provider (local, Python 3.13 compatible, no numba dep)
+faster-whisper>=1.0.0
+
+# STT: google provider (cloud, no API key needed)
+SpeechRecognition>=3.10.0
+
+# TTS: pyttsx3 provider (offline, cross-platform)
+pyttsx3>=2.90
+
+# TTS: edge provider (cloud, high quality, Microsoft Edge Neural voices)
+edge-tts>=6.1.9
